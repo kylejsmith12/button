@@ -1,0 +1,105 @@
+import React, { useState, useEffect } from 'react';
+import { Button } from '@mui/material';
+
+const ButtonGroup = () => {
+  // State to track the clicked button
+  const [selectedButton, setSelectedButton] = useState('');
+
+  useEffect(() => {
+    // Load the last selected button from localStorage on component mount
+    const savedButton = localStorage.getItem('selectedButton');
+    if (savedButton) {
+      setSelectedButton(savedButton);
+    }
+  }, []);
+
+  const handleButtonClick = (buttonName) => {
+    // Set the selected button and save it to localStorage
+    setSelectedButton(buttonName);
+    localStorage.setItem('selectedButton', buttonName);
+  };
+
+  return (
+    <div>
+      <Button
+        onClick={() => handleButtonClick('home')}
+        style={{ backgroundColor: selectedButton === 'home' ? 'green' : 'red' }}
+      >
+        Home
+      </Button>
+      <Button
+        onClick={() => handleButtonClick('page1')}
+        style={{ backgroundColor: selectedButton === 'page1' ? 'green' : 'red' }}
+      >
+        Page 1
+      </Button>
+      <Button
+        onClick={() => handleButtonClick('page2')}
+        style={{ backgroundColor: selectedButton === 'page2' ? 'green' : 'red' }}
+      >
+        Page 2
+      </Button>
+    </div>
+  );
+};
+
+export default ButtonGroup;
+
+
+
+import React, { useState, useEffect } from 'react';
+import { Button } from '@mui/material';
+
+const ButtonGroup = () => {
+  // State to track the clicked button and its colors
+  const [buttonState, setButtonState] = useState({
+    home: {
+      defaultColor: 'red',
+      backgroundColor: 'green',
+    },
+    page1: {
+      defaultColor: 'red',
+      backgroundColor: 'green',
+    },
+    page2: {
+      defaultColor: 'red',
+      backgroundColor: 'green',
+    },
+  });
+
+  useEffect(() => {
+    // Load button state from localStorage on component mount
+    const savedButtonState = JSON.parse(localStorage.getItem('buttonState'));
+    if (savedButtonState) {
+      setButtonState(savedButtonState);
+    }
+  }, []);
+
+  const handleButtonClick = (buttonName) => {
+    // Update button state and save it to localStorage
+    setButtonState((prevState) => ({
+      ...prevState,
+      [buttonName]: {
+        ...prevState[buttonName],
+        backgroundColor: 'green', // Set your desired background color here
+      },
+    }));
+    localStorage.setItem('buttonState', JSON.stringify(buttonState));
+  };
+
+  return (
+    <div>
+      {Object.entries(buttonState).map(([buttonName, { defaultColor, backgroundColor }]) => (
+        <Button
+          key={buttonName}
+          onClick={() => handleButtonClick(buttonName)}
+          style={{ backgroundColor, color: defaultColor }}
+        >
+          {buttonName}
+        </Button>
+      ))}
+    </div>
+  );
+};
+
+export default ButtonGroup;
