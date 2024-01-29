@@ -1,0 +1,33 @@
+/* print.css */
+
+@media print {
+  /* Hide elements not needed in the printed version */
+  body {
+    margin: 0;
+    padding: 20px;
+  }
+
+  /* Add any additional styles for printing */
+}
+
+import React, { useRef } from 'react';
+import './print.css';
+
+const PrintableComponent = ({ content }) => {
+  const componentRef = useRef();
+
+  const handlePrint = () => {
+    // Open the print dialog
+    window.print();
+  };
+
+  return (
+    <div ref={componentRef}>
+      {/* Your component content goes here */}
+      {content}
+      <button onClick={handlePrint}>Print to PDF</button>
+    </div>
+  );
+};
+
+export default PrintableComponent;
