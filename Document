@@ -1,0 +1,167 @@
+import React, { useState, useEffect } from "react";
+import {
+  Container,
+  Paper,
+  Typography,
+  Button,
+  FormControl,
+  InputLabel,
+  Input,
+  Grid,
+} from "@mui/material";
+import html2pdf from "html2pdf.js";
+
+const App = () => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const charactersPerPage = 500;
+  const [variables, setVariables] = useState([
+    { id: 1, name: "HTML document", value: "HTML document" },
+    { id: 2, name: "strong text", value: "strong text" },
+  ]);
+  const [highlightedText, setHighlightedText] = useState("");
+  const [longHTMLText, setLongHTMLText] = useState(""); // State to store dynamic HTML
+  const [highlightedVariables, setHighlightedVariables] = useState([]);
+  // // const [longHTMLText, setLongHTMLText] = useState("");
+  // useEffect(() => {
+  //   paginateContent(longHTMLText, currentPage);
+  // }, [variables, highlightedVariables, currentPage]);
+
+  useEffect(() => {
+    const updatedHTMLText = generateHTMLText();
+    setLongHTMLText(updatedHTMLText);
+    paginateContent(updatedHTMLText, currentPage);
+  }, [variables, currentPage, highlightedVariables]);
+
+  const generateHTMLText = () => {
+    return variables.map((variable) => `<p>${variable.value}</p>`).join("");
+  };
+  const handlePrevPage = () => {
+    setCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
+  };
+
+  const paginateContent = (text, page) => {
+    const startIndex = (page - 1) * charactersPerPage;
+    const endIndex = startIndex + charactersPerPage;
+    const slicedContent = text.slice(startIndex, endIndex);
+    renderDocument(slicedContent);
+  };
+
+  const renderDocument = (content) => {
+    const element = document.getElementById("document-container");
+    element.innerHTML = content;
+
+    // Add event listeners for text selection
+    element.removeEventListener("mouseup", handleTextSelection);
+    element.addEventListener("mouseup", handleTextSelection);
+  };
+
+  const handleTextSelection = () => {
+    const selection = window.getSelection();
+    const selectedText = selection.toString();
+    setHighlightedText(selectedText);
+  };
+
+  const exportToPDF = () => {
+    const element = document.getElementById("document-container");
+    html2pdf(element);
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prevPage) => prevPage + 1);
+  };
+
+  const handleVariableChange = (id, value) => {
+    setVariables((prevVariables) =>
+      prevVariables.map((variable) =>
+        variable.id === id ? { ...variable, value } : variable
+      )
+    );
+  };
+
+  const addVariable = () => {
+    if (highlightedText) {
+      const existingVariable = variables.find(
+        (variable) => variable.value === highlightedText
+      );
+
+      if (!existingVariable) {
+        // Variable does not exist, add it to variables state
+        const newVariable = {
+          id: variables.length + 1,
+          name: `Variable ${variables.length + 1}`,
+          value: highlightedText,
+        };
+        setVariables((prevVariables) => [...prevVariables, newVariable]);
+      }
+
+      setHighlightedText(""); // Clear highlighted text after adding variable
+    }
+  };
+
+  return (
+    <Container>
+      <Grid container spacing={2}>
+        <Grid item xs={3}>
+          <Paper style={{ padding: 20, marginTop: 20 }}>
+            <Typography variant="h5">Variable Options</Typography>
+            {variables.map((variable) => (
+              <div key={variable.id}>
+                <InputLabel>{variable.name}</InputLabel>
+                <Input
+                  type="text"
+                  value={variable.value}
+                  onChange={(e) =>
+                    handleVariableChange(variable.id, e.target.value)
+                  }
+                />
+              </div>
+            ))}
+            <Button variant="contained" color="primary" onClick={addVariable}>
+              Add Variable
+            </Button>
+          </Paper>
+        </Grid>
+        <Grid item xs={9}>
+          <Paper style={{ padding: 20, marginTop: 20 }}>
+            <Typography variant="h5">Document Editor</Typography>
+            <div id="document-container" style={{ marginTop: 10 }}>
+              {/* Document content will be rendered here dynamically */}
+            </div>
+            <div
+              style={{
+                marginTop: 20,
+                display: "flex",
+                justifyContent: "space-between",
+              }}
+            >
+              <PaginationButtons
+                currentPage={currentPage}
+                onNext={handleNextPage}
+                onPrev={handlePrevPage}
+              />
+              <Button variant="contained" color="primary" onClick={exportToPDF}>
+                Export to PDF
+              </Button>
+            </div>
+          </Paper>
+        </Grid>
+      </Grid>
+    </Container>
+  );
+};
+
+const PaginationButtons = ({ currentPage, onNext, onPrev }) => {
+  return (
+    <div style={{ display: "flex", alignItems: "center" }}>
+      <Button onClick={onPrev} disabled={currentPage === 1} color="primary">
+        Prev Page
+      </Button>
+      <Typography style={{ margin: "0 10px" }}>Page {currentPage}</Typography>
+      <Button onClick={onNext} color="primary">
+        Next Page
+      </Button>
+    </div>
+  );
+};
+
+export default App;
