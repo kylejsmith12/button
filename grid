@@ -1,0 +1,52 @@
+import React from "react";
+
+const testMap = new Map();
+testMap.set("People", {
+  Kyle: { ethnicity: "Asian", gender: "Male" },
+  Ruby: { ethnicity: "Hispanic", gender: "Female" },
+});
+
+const Table = () => {
+  const renderTable = () => {
+    const cells = [];
+
+    // Header cell
+    cells.push(<div key="header" className="header">People</div>);
+
+    // Data cells
+    for (const [name, { ethnicity, gender }] of Object.entries(testMap.get("People"))) {
+      cells.push(
+        <div key={`${name}-name`} className="name">{name}</div>,
+        <div key={`${name}-ethnicity`} className="ethnicity">{ethnicity}</div>,
+        <div key={`${name}-gender`} className="gender">{gender}</div>
+      );
+    }
+
+    return cells;
+  };
+
+  return (
+    <div className="table">
+      {renderTable()}
+    </div>
+  );
+};
+
+export default Table;
+.table {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* Adjust the number of columns as needed */
+  gap: 5px; /* Adjust the gap between cells as needed */
+}
+
+.header,
+.name,
+.ethnicity,
+.gender {
+  border: 1px solid black;
+  padding: 5px;
+}
+
+.header {
+  grid-column: span 3; /* Span 3 columns for the header cell */
+}
