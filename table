@@ -1,0 +1,245 @@
+// Import necessary components and icons from Material-UI
+import * as React from 'react';
+import PropTypes from 'prop-types';
+import Box from '@mui/material/Box';
+import Collapse from '@mui/material/Collapse';
+import IconButton from '@mui/material/IconButton';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Typography from '@mui/material/Typography';
+import Paper from '@mui/material/Paper';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import TableSortLabel from '@mui/material/TableSortLabel';
+
+// Function to create data rows for the table
+function createData(name, calories, fat, carbs, protein, price) {
+  return {
+    name,
+    calories,
+    fat,
+    carbs,
+    protein,
+    price,
+    history: [
+      {
+        date: '2020-01-05',
+        customerId: '11091700',
+        amount: 3,
+      },
+      {
+        date: '2020-01-02',
+        customerId: 'Anonymous',
+        amount: 1,
+      },
+    ],
+  };
+}
+
+// Functional component for each row in the collapsible table
+function Row(props) {
+  const { row } = props;
+  const [open, setOpen] = React.useState(false);
+
+  return (
+    <React.Fragment>
+      {/* Main row with expand/collapse button and basic information */}
+      <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
+        <TableCell>
+          {/* Expand/collapse button */}
+          <IconButton
+            aria-label="expand row"
+            size="small"
+            onClick={() => setOpen(!open)}
+          >
+            {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+          </IconButton>
+        </TableCell>
+        <TableCell component="th" scope="row">
+          {row.name}
+        </TableCell>
+        <TableCell align="right">{row.calories}</TableCell>
+        <TableCell align="right">{row.fat}</TableCell>
+        <TableCell align="right">{row.carbs}</TableCell>
+        <TableCell align="right">{row.protein}</TableCell>
+      </TableRow>
+
+      {/* Collapsible row with detailed information */}
+      <TableRow>
+        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+          {/* Use Collapse component for collapsible content */}
+          <Collapse in={open} timeout="auto" unmountOnExit>
+            <Box sx={{ margin: 1 }}>
+              {/* Detailed information, such as history */}
+              <Typography variant="h6" gutterBottom component="div">
+                History
+              </Typography>
+              <Table size="small" aria-label="purchases">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Date</TableCell>
+                    <TableCell>Customer</TableCell>
+                    <TableCell align="right">Amount</TableCell>
+                    <TableCell align="right">Total price ($)</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {row.history.map((historyRow) => (
+                    <TableRow key={historyRow.date}>
+                      <TableCell component="th" scope="row">
+                        {historyRow.date}
+                      </TableCell>
+                      <TableCell>{historyRow.customerId}</TableCell>
+                      <TableCell align="right">{historyRow.amount}</TableCell>
+                      <TableCell align="right">
+                        {Math.round(historyRow.amount * row.price * 100) / 100}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Box>
+          </Collapse>
+        </TableCell>
+      </TableRow>
+    </React.Fragment>
+  );
+}
+
+// PropTypes for Row component to enforce prop types
+Row.propTypes = {
+  row: PropTypes.shape({
+    calories: PropTypes.number.isRequired,
+    carbs: PropTypes.number.isRequired,
+    fat: PropTypes.number.isRequired,
+    history: PropTypes.arrayOf(
+      PropTypes.shape({
+        amount: PropTypes.number.isRequired,
+        customerId: PropTypes.string.isRequired,
+        date: PropTypes.string.isRequired,
+      }),
+    ).isRequired,
+    name: PropTypes.string.isRequired,
+    price: PropTypes.number.isRequired,
+    protein: PropTypes.number.isRequired,
+  }).isRequired,
+};
+
+// Functional component for sortable table header cell
+const TableHeaderCell = ({ label, onSort, sortKey, isSortActive, isSortDescending }) => (
+  <TableCell>
+    {/* Use TableSortLabel for sortable table headers */}
+    <TableSortLabel
+      active={isSortActive}
+      direction={isSortDescending ? 'desc' : 'asc'}
+      onClick={() => onSort(sortKey)}
+    >
+      {label}
+    </TableSortLabel>
+  </TableCell>
+);
+
+// PropTypes for TableHeaderCell component to enforce prop types
+TableHeaderCell.propTypes = {
+  label: PropTypes.string.isRequired,
+  onSort: PropTypes.func.isRequired,
+  sortKey: PropTypes.string.isRequired,
+  isSortActive: PropTypes.bool.isRequired,
+  isSortDescending: PropTypes.bool.isRequired,
+};
+
+// Main CollapsibleTable component
+const CollapsibleTable = () => {
+  // State for managing rows and sorting configuration
+  const [rows, setRows] = React.useState([
+    createData('Frozen yoghurt', 159, 6.0, 24, 4.0, 3.99),
+    createData('Ice cream sandwich', 237, 9.0, 37, 4.3, 4.99),
+    createData('Eclair', 262, 16.0, 24, 6.0, 3.79),
+    createData('Cupcake', 305, 3.7, 67, 4.3, 2.5),
+    createData('Gingerbread', 356, 16.0, 49, 3.9, 1.5),
+  ]);
+  const [sortConfig, setSortConfig] = React.useState({
+    key: '',
+    direction: 'asc',
+  });
+
+  // Function to handle sorting when clicking on table headers
+  const onSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+
+    // Sort the rows based on the selected key and direction
+    const sortedRows = [...rows].sort((a, b) => {
+      if (a[key] < b[key]) return direction === 'asc' ? -1 : 1;
+      if (a[key] > b[key]) return direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    setRows(sortedRows);
+  };
+
+  // Render the collapsible table
+  return (
+    <TableContainer component={Paper}>
+      <Table aria-label="collapsible table">
+        <TableHead>
+          {/* Table header with sortable cells */}
+          <TableRow>
+            <TableCell />
+            <TableHeaderCell
+              label="Dessert (100g serving)"
+              onSort={onSort}
+              sortKey="name"
+              isSortActive={sortConfig.key === 'name'}
+              isSortDescending={sortConfig.direction === 'desc'}
+            />
+            <TableHeaderCell
+              label="Calories"
+              onSort={onSort}
+              sortKey="calories"
+              isSortActive={sortConfig.key === 'calories'}
+              isSortDescending={sortConfig.direction === 'desc'}
+            />
+            <TableHeaderCell
+              label="Fat (g)"
+              onSort={onSort}
+              sortKey="fat"
+              isSortActive={sortConfig.key === 'fat'}
+              isSortDescending={sortConfig.direction === 'desc'}
+            />
+            <TableHeaderCell
+              label="Carbs (g)"
+              onSort={onSort}
+              sortKey="carbs"
+              isSortActive={sortConfig.key === 'carbs'}
+              isSortDescending={sortConfig.direction === 'desc'}
+            />
+            <TableHeaderCell
+              label="Protein (g)"
+              onSort={onSort}
+              sortKey="protein"
+              isSortActive={sortConfig.key === 'protein'}
+              isSortDescending={sortConfig.direction === 'desc'}
+            />
+          </TableRow>
+        </TableHead>
+        {/* Table body with rows */}
+        <TableBody>
+          {rows.map((row) => (
+            <Row key={row.name} row={row} />
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+};
+
+// Export the CollapsibleTable component as the default export
+export default CollapsibleTable;
