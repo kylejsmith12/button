@@ -1,0 +1,274 @@
+import React, { useState, useRef } from "react";
+import {
+  Container,
+  Grid,
+  Button,
+  Toolbar,
+  Typography,
+  AppBar,
+  CssBaseline,
+} from "@mui/material";
+import DocumentDisplay from "./components/DocumentDisplay";
+import Dropdowns from "./components/Dropdowns";
+import html2pdf from "html2pdf.js";
+import Paragraph from "./components/Paragraph";
+import Blockquote from "./components/Blockquote";
+import Bulletlist from "./components/Bulletlist";
+import DynamicTable from "./components/DynamicTable";
+
+const interpolate = (template, variables, category) => {
+  return template.replace(
+    /\${(.*?)}/g,
+    (match, p1) => variables[p1.trim()] || category
+  );
+};
+
+const generateParagraphs = (variables, category) => {
+  const structuredParagraphs = [
+    {
+      type: "paragraph",
+      content: `
+        Nearly ten years had passed since the ${variables.variable1} had woken up to find their nephew on the front step, 
+        but ${variables.variable2} had hardly changed at all. The sun rose on the same tidy front gardens and lit up the brass 
+        number four on the ${variables.variable3}' front door; it crept into their living room, which was almost exactly the same 
+        as it had been on the night when Mr. ${variables.variable1} had seen that fateful news report about the owls. Only the 
+        photographs on the mantelpiece really showed how much time had passed. Ten years ago, there had been lots of 
+        pictures of what looked like a large pink beach ball wearing different-colored bonnets - but ${variables.variable3} 
+        was no longer a baby, and now the photographs showed a large blond boy riding his first bicycle, on a carousel 
+        at the fair, playing a computer game with his father, being hugged and kissed by his mother. The room held no 
+        sign at all that another boy lived in the house, too.
+      `,
+      variables: variables,
+    },
+    // ... (other paragraphs)
+  ];
+
+  return structuredParagraphs.map((paragraph, index) => {
+    const { type, content, variables, items } = paragraph;
+
+    switch (type) {
+      case "paragraph":
+        return (
+          <Paragraph
+            key={index}
+            content={interpolate(content, variables, category)}
+          />
+        );
+      // ... (other cases)
+      default:
+        return null;
+    }
+  });
+};
+
+const generateDocumentContent = (variables) => {
+  const [tableHeaders, setTableHeaders] = useState([
+    "Header1",
+    "Header2",
+    "Header3",
+  ]); // Define your headers
+  const [tableData, setTableData] = useState([
+    // Define your data
+    { Header1: "Data1", Header2: "Data2", Header3: "Data3" },
+    { Header1: "Data4", Header2: "Data5", Header3: "Data6" },
+  ]);
+  const documentContent = [];
+
+  for (let category in variables) {
+    const paragraphs = generateParagraphs(variables[category], category);
+
+    documentContent.push(
+      ...paragraphs,
+      <DynamicTable
+        key={`${category}-table`}
+        headers={tableHeaders} // You need to define tableHeaders
+        data={tableData} // You need to define tableData
+        setData={setTableData} // You need to define setTableData
+      />
+    );
+  }
+
+  return documentContent;
+};
+
+const App = () => {
+  const [variables, setVariables] = useState({
+    harryPotter: {
+      variable1: "Dursleys",
+      variable2: "Privet Drive",
+      variable3: "Dudley Dursley",
+    },
+    lordOfTheRings: {
+      variable1: "Galadriel",
+      variable2: "Sam",
+      variable3: "Lorien",
+    },
+    // Add more categories as needed
+  });
+
+  const [selectedCategory, setSelectedCategory] = useState("harryPotter");
+  const [selectedView, setSelectedView] = useState("single"); // 'single' or 'all'
+
+  const documentDisplayRef = useRef(null);
+
+  const handleViewChange = (view) => {
+    setSelectedView(view);
+  };
+
+  const handleDropdownChange = (category, variable, value) => {
+    setVariables((prevVariables) => ({
+      ...prevVariables,
+      [category]: {
+        ...prevVariables[category],
+        [variable]: value,
+      },
+    }));
+  };
+
+  const handleExportPDF = async () => {
+    const pdfOptions = {
+      margin: 10,
+      filename: "my_document.pdf",
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+    };
+
+    const contentElement = documentDisplayRef.current;
+    const pdfBlob = await html2pdf()
+      .from(contentElement)
+      .set(pdfOptions)
+      .outputPdf("blob");
+
+    const downloadLink = document.createElement("a");
+    downloadLink.href = URL.createObjectURL(pdfBlob);
+    downloadLink.download = pdfOptions.filename;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+  };
+
+  return (
+    <Container
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100vh",
+        marginTop: "20px",
+      }}
+    >
+      <CssBaseline />
+      <AppBar position="static">
+        <Toolbar>
+          <Typography variant="h6">My Blog</Typography>
+        </Toolbar>
+      </AppBar>
+      <Toolbar />
+      <Grid container style={{ width: "100%" }}>
+        <Grid
+          item
+          xs={12}
+          md={4}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            marginBottom: "20px",
+          }}
+        >
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <Dropdowns
+                category={selectedCategory}
+                variables={variables[selectedCategory]}
+                onChange={handleDropdownChange}
+                onViewChange={handleViewChange}
+                selectedView={selectedView}
+              />
+            </Grid>
+          </Grid>
+        </Grid>
+        <Grid item xs={12} md={8}>
+          <DocumentDisplay
+            ref={documentDisplayRef}
+            title="My Blog Document"
+            paragraphs={generateDocumentContent(variables)}
+          />
+          {selectedView === "all" && (
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={handleExportPDF}
+            >
+              Export to PDF
+            </Button>
+          )}
+        </Grid>
+      </Grid>
+      <Toolbar>
+        <Button variant="contained" color="primary">
+          Save
+        </Button>
+      </Toolbar>
+    </Container>
+  );
+};
+
+export default App;
+// Dropdowns.jsx
+import React from "react";
+import {
+  Input,
+  InputLabel,
+  FormControl,
+  Select,
+  MenuItem,
+} from "@mui/material";
+
+const Dropdowns = ({
+  category,
+  variables,
+  onChange,
+  onViewChange,
+  selectedView,
+}) => {
+  const handleChange = (variable, event) => {
+    onChange(category, variable, event.target.value);
+  };
+
+  const handleChangeView = (event) => {
+    onChange(event.target.value); // Correct the prop name here as well
+  };
+
+  return (
+    <div>
+      <FormControl fullWidth style={{ marginBottom: "10px" }}>
+        <InputLabel>Category</InputLabel>
+        <Select value={selectedView} onChange={handleChangeView}>
+          <MenuItem value="harryPotter">Harry Potter</MenuItem>
+          <MenuItem value="lordOfTheRings">Lord of the Rings</MenuItem>
+        </Select>
+      </FormControl>
+      {Object.entries(variables).map(([variable, value]) => (
+        <FormControl key={variable} fullWidth style={{ marginBottom: "10px" }}>
+          <InputLabel>{variable}</InputLabel>
+          <Input
+            type="text"
+            value={value}
+            onChange={(e) => handleChange(variable, e)}
+          />
+        </FormControl>
+      ))}
+      <FormControl fullWidth style={{ marginBottom: "10px" }}>
+        <InputLabel>View</InputLabel>
+        <Select value={selectedView} onChange={handleChangeView}>
+          <MenuItem value="single">Single</MenuItem>
+          <MenuItem value="all">All</MenuItem>
+        </Select>
+      </FormControl>
+    </div>
+  );
+};
+
+export default Dropdowns;
