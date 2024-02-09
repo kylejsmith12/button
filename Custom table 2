@@ -1,0 +1,70 @@
+import React from 'react';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
+
+function CustomTable({ columns, data }) {
+  return (
+    <TableContainer component={Paper}>
+      <Table>
+        <TableHead>
+          <TableRow>
+            {columns.map((column) => (
+              <TableCell key={column.key}>{column.label}</TableCell>
+            ))}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {data.map((row, rowIndex) => (
+            <TableRow key={rowIndex}>
+              {columns.map((column) => (
+                <TableCell key={column.key}>{row[column.key]}</TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+}
+
+function CombinedTables({ tablesData }) {
+  const combinedData = [];
+
+  tablesData.forEach((tableData, index) => {
+    const tableIndex = index + 1;
+    tableData.forEach((row) => {
+      combinedData.push({ ...row, table: tableIndex });
+    });
+  });
+
+  const allColumns = Object.keys(combinedData.reduce((acc, row) => ({ ...acc, ...row }), {}));
+  const uniqueColumns = allColumns.filter((columnName, index) => allColumns.indexOf(columnName) === index);
+
+  return (
+    <CustomTable
+      columns={uniqueColumns.map((columnName) => ({ key: columnName, label: columnName }))}
+      data={combinedData}
+    />
+  );
+}
+
+export default CombinedTables;
+
+
+const table1Data = [
+  { id: 1, name: 'John', age: 30, city: 'New York' },
+  { id: 2, name: 'Jane', age: 25, city: 'Los Angeles' },
+  { id: 3, name: 'Alice', age: 35, city: 'Chicago' },
+];
+
+const table2Data = [
+  { id: 4, name: 'Bob', age: 40, city: 'Miami' },
+  { id: 5, name: 'Sarah', age: 28, city: 'Seattle' },
+];
+
+const table3Data = [
+  { id: 6, name: 'Tom', age: 45, city: 'Boston' },
+];
+
+const tablesData = [table1Data, table2Data, table3Data];
+
+<CombinedTables tablesData={tablesData} />;
