@@ -1,0 +1,58 @@
+import React from 'react';
+
+// Component with nested ternary operators
+const NestedTernaryComponent = ({ condition1, condition2, condition3 }) => (
+  <div>
+    {condition1 ? (
+      <div>
+        Condition 1 is true
+        {condition2 ? (
+          <div>Condition 2 is true</div>
+        ) : (
+          <div>Condition 2 is false</div>
+        )}
+      </div>
+    ) : (
+      <div>Condition 1 is false</div>
+    )}
+    {condition3 ? (
+      <div>Condition 3 is true</div>
+    ) : (
+      <div>Condition 3 is false</div>
+    )}
+  </div>
+);
+
+// Helper function with if/else-if logic
+const determineMessage = ({ condition1, condition2, condition3 }) => {
+  if (condition1) {
+    if (condition2) {
+      return "Condition 1 is true, and Condition 2 is true";
+    } else {
+      return "Condition 1 is true, but Condition 2 is false";
+    }
+  } else {
+    return "Condition 1 is false";
+  }
+
+  if (condition3) {
+    return "Condition 3 is true";
+  } else {
+    return "Condition 3 is false";
+  }
+};
+
+// Alternate component using helper function
+const ComponentWithHelperFunction = (props) => (
+  <div>{determineMessage(props)}</div>
+);
+
+// Usage of both components
+const App = () => (
+  <div>
+    <NestedTernaryComponent condition1={true} condition2={true} condition3={false} />
+    <ComponentWithHelperFunction condition1={true} condition2={true} condition3={false} />
+  </div>
+);
+
+export default App;
