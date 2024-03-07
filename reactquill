@@ -1,0 +1,39 @@
+import React, { useState, useRef } from 'react';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css'; // Import Quill styles
+
+const MyEditor = () => {
+  const [editorHtml, setEditorHtml] = useState('');
+  const [editorText, setEditorText] = useState('');
+  const quillRef = useRef(null);
+
+  // Function to handle editor content change
+  const handleEditorChange = (content, delta, source, editor) => {
+    setEditorHtml(content);
+    setEditorText(editor.getText()); // Get plaintext content
+  };
+
+  // Function to log editor content to console
+  const logEditorContent = () => {
+    if (quillRef.current) {
+      const editor = quillRef.current.getEditor();
+      const content = editor.root.innerHTML; // Get the HTML content
+      console.log('Editor HTML content:', content);
+      console.log('Editor plaintext content:', editorText);
+    }
+  };
+
+  return (
+    <div>
+      <ReactQuill
+        ref={quillRef}
+        theme="snow"
+        value={editorHtml}
+        onChange={handleEditorChange}
+      />
+      <button onClick={logEditorContent}>Log Editor Content</button>
+    </div>
+  );
+};
+
+export default MyEditor;
