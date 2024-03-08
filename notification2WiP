@@ -1,0 +1,445 @@
+import React, { useRef, useContext, useState } from "react";
+import {
+  Container,
+  Grid,
+  Button,
+  Toolbar,
+  Typography,
+  AppBar,
+  CssBaseline,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
+  Box,
+  IconButton,
+  Popper,
+  Fade,
+  FormGroup,
+  FormControlLabel,
+  Switch,
+  Stack,
+  Divider,
+  Alert,
+  Badge,
+} from "@mui/material";
+import { AppContext } from "./Context"; // Import the AppContext
+import { ToastContainer } from "react-toastify";
+import "react-toastify/ReactToastify.min.css";
+import DocumentViewer from "./components/DocumentViewer";
+import PeopleDropdown from "./components/PeopleDropdown";
+import html2pdf from "html2pdf.js";
+import MarkChatReadIcon from "@mui/icons-material/MarkChatRead";
+import CheckIcon from "@mui/icons-material/Check";
+import { useNotificationCenter } from "react-toastify/addons/use-notification-center";
+import { toast } from "react-toastify";
+import NotificationsIcon from "@mui/icons-material/Notifications";
+
+const types = ["success", "info", "warning", "error"];
+
+const App = () => {
+  const paragraph1 =
+    "She did a happy dance because all of the socks from the dryer matched.";
+  const paragraph2 =
+    "he did a happy clap cuz all of the rocks from the pond matched.";
+  const { state, setState } = useContext(AppContext);
+  const { selectedCategory, selectedView } = state;
+  const documentDisplayRef = useRef(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedPerson, setSelectedPerson] = useState(null);
+  const { notifications, clear, markAllAsRead, markAsRead, unreadCount } =
+    useNotificationCenter();
+  const [showUnreadOnly, setShowUnreadOnly] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
+  let notificationIdCounter = 0;
+
+  const handleDropdownChange = (category, variable, value) => {
+    setState((prevState) => ({
+      ...prevState,
+      variables: {
+        ...prevState.variables,
+        [category]: {
+          ...prevState.variables[category],
+          [variable]: value,
+        },
+      },
+    }));
+    console.log("Updated variables:", category, variable, value);
+  };
+
+  const handlePersonChange = (personName) => {
+    setSelectedPerson(personName);
+    const selectedPersonData = Object.values(state.tableData)
+      .flatMap((category) => category.flatMap((item) => item.People))
+      .find((person) => person.name === personName);
+
+    setState((prevState) => ({
+      ...prevState,
+      variables: {
+        ...prevState.variables,
+        dynamicTable: {
+          ...prevState.variables.dynamicTable,
+          variable3: selectedPersonData.description,
+        },
+      },
+    }));
+
+    setSelectedPerson(personName);
+  };
+
+  function textDiff(paragraph1, paragraph2) {
+    console.log("paragraph1: ", paragraph1);
+    const words1 = paragraph1.split(/\s+/);
+    const words2 = paragraph2.split(/\s+/);
+    console.log("words1: ", words1);
+    const diffMap = new Map();
+
+    for (let i = 0; i < Math.max(words1.length, words2.length); i++) {
+      const word1 = words1[i] || null;
+      const word2 = words2[i] || null;
+
+      if (word1 !== word2) {
+        diffMap.set(i, {
+          previousWord: word1,
+          newWord: word2,
+          position: i,
+        });
+      }
+    }
+
+    return diffMap;
+  }
+
+  const handleExportPDF = async () => {
+    const pdfOptions = {
+      margin: 10,
+      filename: "my_document.pdf",
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+    };
+
+    const container = document.createElement("div");
+
+    const firstPageContent = document.createElement("div");
+    firstPageContent.innerHTML = documentDisplayRef.current.innerHTML;
+    firstPageContent.style.height = "auto";
+    container.appendChild(firstPageContent);
+
+    setCurrentPage(2);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const secondPageContent = document.createElement("div");
+    secondPageContent.innerHTML = documentDisplayRef.current.innerHTML;
+    secondPageContent.style.height = "auto";
+    container.appendChild(secondPageContent);
+
+    const combinedPdfBlob = await html2pdf()
+      .from(container)
+      .set(pdfOptions)
+      .outputPdf("blob");
+
+    const downloadLink = document.createElement("a");
+    downloadLink.href = URL.createObjectURL(combinedPdfBlob);
+    downloadLink.download = pdfOptions.filename;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+  };
+
+  const handleAddParagraph = () => {
+    const currentParagraphJSX = state.paragraphs[selectedCategory];
+
+    const currentParagraphText = extractTextFromJSX(currentParagraphJSX);
+
+    const newSentenceText = "New sentence text";
+
+    const updatedParagraphText = `${
+      currentParagraphText || ""
+    } ${newSentenceText}`;
+
+    const existingVariableCount =
+      Object.keys(state.variables[selectedCategory]).length + 1;
+
+    const newVariableKey = `variable${existingVariableCount + 1}`;
+
+    setState((prevState) => ({
+      ...prevState,
+      paragraphs: {
+        ...prevState.paragraphs,
+        [selectedCategory]: updatedParagraphText,
+      },
+      variables: {
+        ...prevState.variables,
+        [selectedCategory]: {
+          ...prevState.variables[selectedCategory],
+          [newVariableKey]: newSentenceText,
+        },
+      },
+    }));
+  };
+
+  const extractTextFromJSX = (jsxElement) => {
+    if (!jsxElement) return "";
+    if (typeof jsxElement === "string") return jsxElement;
+    if (Array.isArray(jsxElement)) {
+      return jsxElement.map((child) => extractTextFromJSX(child)).join("");
+    }
+    if (jsxElement.props && jsxElement.props.children) {
+      return extractTextFromJSX(jsxElement.props.children);
+    }
+    return "";
+  };
+
+  const addNotification = () => {
+    const differences = textDiff(paragraph1, paragraph2);
+    console.log("differences: ", differences);
+    differences.forEach((diff, index) => {
+      const id = `${notificationIdCounter++}`; // Generate unique id for each notification
+
+      const notification = {
+        id: id,
+        type: types[Math.floor(Math.random() * types.length)],
+        read: false,
+        ...diff, // Include word differences in the notification object
+      };
+      notifications.push(notification); // Add the notification to the array
+      console.log("notification: ", notifications);
+      toast(
+        <div>
+          <strong>{diff.previousWord}</strong> | <strong>{diff.newWord}</strong>
+        </div>,
+        {
+          onClose: () => markAsRead(id), // Mark notification as read when closed
+          type: types[Math.floor(Math.random() * types.length)],
+        }
+      );
+    });
+  };
+
+  const toggleNotificationCenter = (event) => {
+    setAnchorEl(event.currentTarget);
+    setIsOpen(!isOpen);
+  };
+
+  const toggleFilter = (e) => {
+    setShowUnreadOnly(!showUnreadOnly);
+  };
+
+  return (
+    <Container style={{ minHeight: "100vh" }}>
+      <CssBaseline />
+      <AppBar position="static">
+        <Toolbar sx={{ justifyContent: "space-between" }}>
+          <Typography variant="h6">My Blog</Typography>
+          <IconButton size="large" onClick={toggleNotificationCenter}>
+            <Badge badgeContent={unreadCount} color="primary">
+              <NotificationsIcon color="action" />
+            </Badge>
+          </IconButton>
+
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={addNotification}
+          >
+            Test
+          </Button>
+          <ToastContainer position="bottom-right" newestOnTop />
+        </Toolbar>
+      </AppBar>
+      <Toolbar />
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={4}>
+          <FormControl fullWidth style={{ marginBottom: "20px" }}>
+            <InputLabel id="view-select-label">View</InputLabel>
+            <Select
+              labelId="view-select-label"
+              id="view-select"
+              value={selectedView}
+              onChange={(e) =>
+                setState((prevState) => ({
+                  ...prevState,
+                  selectedView: e.target.value,
+                }))
+              }
+            >
+              <MenuItem value="single">Single</MenuItem>
+              <MenuItem value="all">All</MenuItem>
+            </Select>
+          </FormControl>
+          {selectedView !== "all" && (
+            <FormControl fullWidth style={{ marginBottom: "20px" }}>
+              <InputLabel id="category-select-label">Category</InputLabel>
+              <Select
+                labelId="category-select-label"
+                id="category-select"
+                value={selectedCategory}
+                onChange={(e) =>
+                  setState((prevState) => ({
+                    ...prevState,
+                    selectedCategory: e.target.value,
+                  }))
+                }
+              >
+                <MenuItem value="harryPotter">Harry Potter</MenuItem>
+                <MenuItem value="lordOfTheRings">Lord of the Rings</MenuItem>
+                <MenuItem value="dynamicTable">Dynamic Table</MenuItem>
+              </Select>
+            </FormControl>
+          )}
+          {selectedView === "single" && selectedCategory === "dynamicTable" && (
+            <PeopleDropdown
+              variables={state.variables.dynamicTable}
+              onChange={handlePersonChange}
+            />
+          )}
+        </Grid>
+        <Grid item xs={12} md={8}>
+          <DocumentViewer
+            ref={documentDisplayRef}
+            title="My Blog Document"
+            selectedCategory={selectedCategory}
+            selectedView={selectedView}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+          />
+          {selectedView === "all" && (
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={handleExportPDF}
+              style={{ marginTop: "20px" }}
+            >
+              Export to PDF
+            </Button>
+          )}
+        </Grid>
+      </Grid>
+      <Toolbar>
+        <Button variant="contained" color="primary">
+          Save
+        </Button>
+        <Button onClick={() => textDiff(paragraph1, paragraph2)}>test</Button>
+      </Toolbar>
+      <Popper open={isOpen} anchorEl={anchorEl} transition>
+        {({ TransitionProps }) => (
+          <Fade {...TransitionProps} timeout={350}>
+            <Box>
+              <Box
+                sx={{
+                  background: "#666",
+                  padding: "8px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Typography variant="h5" color="#fff">
+                  Notification center
+                </Typography>
+                <FormGroup sx={{ color: "#fff" }}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        color="secondary"
+                        onChange={toggleFilter}
+                        checked={showUnreadOnly}
+                      />
+                    }
+                    label="Show unread only"
+                  />
+                </FormGroup>
+              </Box>
+              <Stack
+                sx={{
+                  height: "400px",
+                  width: "min(60ch, 100ch)",
+                  padding: "12px",
+                  background: "#f1f1f1",
+                  borderRadius: "8px",
+                  overflowY: "auto",
+                }}
+                spacing={2}
+              >
+                {(!notifications.length ||
+                  (unreadCount === 0 && showUnreadOnly)) && (
+                  <h4>
+                    Your queue is empty! you are all set{" "}
+                    <span role="img" aria-label="dunno what to put">
+                      🎉
+                    </span>
+                  </h4>
+                )}
+                {notifications
+                  .filter((v) => !showUnreadOnly || !v.read)
+                  .map((notification) => {
+                    console.log("kyle: ", notification);
+                    const differences = textDiff(paragraph1, paragraph2);
+                    return Array.from(differences.values()).map(
+                      (diff, index) => ({
+                        ...notification,
+                        ...diff,
+                      })
+                    );
+                  })
+                  .flat()
+                  .map((notification, index) => (
+                    <React.Fragment key={index}>
+                      <Alert
+                        severity={notification.type || "info"}
+                        action={
+                          notification.read ? (
+                            <CheckIcon />
+                          ) : (
+                            <IconButton
+                              color="primary"
+                              aria-label="upload picture"
+                              component="span"
+                              onClick={() => markAsRead(notification.id)}
+                            >
+                              <MarkChatReadIcon />
+                            </IconButton>
+                          )
+                        }
+                      >
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                          <Typography variant="body1">
+                            <strong>{notification.previousWord}</strong>
+                          </Typography>
+                          <Divider orientation="vertical" flexItem />
+                          <Typography variant="body1">
+                            <strong>{notification.newWord}</strong>
+                          </Typography>
+                        </Stack>
+                      </Alert>
+                    </React.Fragment>
+                  ))}
+              </Stack>
+              <Box
+                sx={{
+                  background: "#666",
+                  padding: "8px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Button variant="contained" onClick={clear}>
+                  Clear All
+                </Button>
+
+                <Button variant="contained" onClick={markAllAsRead}>
+                  Mark all as read
+                </Button>
+              </Box>
+            </Box>
+          </Fade>
+        )}
+      </Popper>
+    </Container>
+  );
+};
+
+export default App;
