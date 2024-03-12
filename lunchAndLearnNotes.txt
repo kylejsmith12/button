@@ -1,0 +1,23 @@
+Npm create vite@latest .
+npm install @mui/material @emotion/react @emotion/styled –save
+Npm run dev
+Remove stuff from css (explain what css is)
+Remove stuff from app.jsx
+Import React from ‘react’
+Have the return statement, explain that you can call basic html tags, but also enter into javascript format using curly braces
+Create a components folder
+Call the custom component in the components folder whatever
+Show them mui components that you can reference from the website
+Demonstrate arrays
+Explain key/value objects within the array
+Print out values from the map
+Demonstrate calling the custom component
+Show that the child component is being rendered from the parent component
+Demonstrate props
+Create the selection, demonstrate short-circuiting and states
+Demonstrate setting states
+Show onchange and events
+Payloads
+Demonstrate inline styling
+
+
