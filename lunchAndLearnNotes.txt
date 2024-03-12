@@ -21,3 +21,56 @@ Payloads
 Demonstrate inline styling
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import React, { useState } from 'react';
+
+const UpdateComponent = () => {
+  const [count, setCount] = useState(0);
+
+  // This function increments the count but does not update the component
+  // because it doesn't use setCount
+  const incrementWithoutSetState = () => {
+    count += 1; // This directly modifies the count, but doesn't trigger a re-render
+  };
+
+  // This function increments the count and updates the component
+  // because it uses setCount
+  const incrementWithSetState = () => {
+    setCount(prevCount => prevCount + 1);
+  };
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={incrementWithoutSetState}>
+        Increment without setCount
+      </button>
+      <button onClick={incrementWithSetState}>
+        Increment with setCount
+      </button>
+    </div>
+  );
+};
+
+export default UpdateComponent;
+
+
