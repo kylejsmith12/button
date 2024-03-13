@@ -1,0 +1,87 @@
+import React from 'react';
+
+const DangerousHTMLComponent = () => {
+  const htmlContent = '<p>This is <strong>bold</strong> text with <em>italic</em> formatting.</p>';
+
+  return (
+    <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
+  );
+};
+
+export default DangerousHTMLComponent;
+
+
+import React from 'react';
+import DOMPurify from 'dompurify';
+
+const SafeHTMLComponent = () => {
+  const htmlContent = '<p>This is <strong>bold</strong> text with <em>italic</em> formatting.</p>';
+  const sanitizedHTML = DOMPurify.sanitize(htmlContent);
+
+  return (
+    <div dangerouslySetInnerHTML={{ __html: sanitizedHTML }} />
+  );
+};
+
+export default SafeHTMLComponent;
+
+import React from 'react';
+
+const SafeHTMLComponent = () => {
+  const htmlContent = '<p>This is <strong>bold</strong> text with <em>italic</em> formatting.</p>';
+
+  // Parse the HTML content into React elements
+  const parsedHTML = React.createElement('div', { dangerouslySetInnerHTML: { __html: htmlContent } });
+
+  return parsedHTML;
+};
+
+export default SafeHTMLComponent;
+
+
+
+import React from 'react';
+
+const SafeHTMLComponent = () => {
+  const htmlContent = '<p>This is <strong>bold</strong> text with <em>italic</em> formatting.</p>';
+
+  // Function to parse the HTML content and convert it into React elements
+  const parseHTML = (html) => {
+    // Split the HTML content by opening and closing tags
+    const htmlParts = html.split(/<(\/?[^>]+)>/);
+    
+    // Initialize an array to store React elements
+    const elements = [];
+    
+    // Iterate over the HTML parts
+    for (let i = 0; i < htmlParts.length; i++) {
+      const part = htmlParts[i];
+      
+      // Check if the part is a tag or text content
+      if (part.charAt(0) === '<') {
+        // If it's a tag, create a React element
+        const tagName = part.substring(1, part.indexOf('>'));
+        const isClosingTag = part.charAt(1) === '/';
+        if (!isClosingTag) {
+          elements.push(React.createElement(tagName, { key: i }));
+        }
+      } else {
+        // If it's text content, push it as a React fragment
+        elements.push(part);
+      }
+    }
+    
+    return elements;
+  };
+
+  // Parse the HTML content into React elements
+  const renderedContent = parseHTML(htmlContent);
+
+  return (
+    <div>
+      {renderedContent}
+    </div>
+  );
+};
+
+export default SafeHTMLComponent;
