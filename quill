@@ -1,0 +1,53 @@
+import React, { useState, useEffect } from 'react';
+import Quill from 'quill';
+
+const NewNotesForm = () => {
+  const [editor, setEditor] = useState(null);
+
+  useEffect(() => {
+    const quill = new Quill('#editor', {
+      modules: {
+        toolbar: [
+          ['bold', 'italic'],
+          ['link', 'blockquote', 'code-block', 'image'],
+          [{ list: 'ordered' }, { list: 'bullet' }]
+        ]
+      },
+      placeholder: 'Notiz hier eingeben...',
+      theme: 'snow'
+    });
+    setEditor(quill);
+  }, []);
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    const commentInput = document.querySelector('input[name=comment]');
+    if (editor) {
+      commentInput.value = editor.root.innerHTML;
+      console.log(commentInput.value);
+    }
+    // You can add any additional logic here, like sending the form data to a server.
+  };
+
+  return (
+    <form id="new-notes-form" className="mt-3" onSubmit={handleSubmit}>
+      <div className="form-group">
+        <h5>{trans('leave_comment')}</h5>
+        <input name="comment" type="hidden" />
+        <div id="editor" style={{ height: '200px' }}>
+          <p>Hello World!</p>
+          <p>Some initial <strong>bold</strong> text</p>
+          <p><br /></p>
+        </div>
+      </div>
+      <div className="form-group">
+        <button className="btn btn-primary" id="btn-comment" type="submit">
+          {trans('save-note')}
+          Console.log
+        </button>
+      </div>
+    </form>
+  );
+};
+
+export default NewNotesForm;
