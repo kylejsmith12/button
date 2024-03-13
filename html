@@ -1,0 +1,93 @@
+import React from 'react';
+
+const StripHTML = ({ htmlBody }) => {
+  const stripHtmlTags = (html) => {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    return tempDiv.textContent || tempDiv.innerText || '';
+  };
+
+  return (
+    <div>
+      <h3>Stripped HTML Content:</h3>
+      <p>{stripHtmlTags(htmlBody)}</p>
+    </div>
+  );
+};
+
+export default StripHTML;
+
+
+
+
+
+function stripHtmlTags(html) {
+  return html.replace(/<[^>]*>/g, '');
+}
+
+
+
+
+1. **Using Regular Expression:**
+   This is a simple approach using regular expressions. It's not foolproof for all cases, especially with complex HTML, but for basic HTML it works fine.
+
+   ```javascript
+   function stripHtmlTags(html) {
+     return html.replace(/<[^>]*>/g, '');
+   }
+   ```
+
+2. **Using DOM Parser:**
+   This method creates a temporary DOM element and then retrieves the text content, effectively stripping HTML tags.
+
+   ```javascript
+   function stripHtmlTags(html) {
+     const tempDiv = document.createElement('div');
+     tempDiv.innerHTML = html;
+     return tempDiv.textContent || tempDiv.innerText || '';
+   }
+   ```
+
+3. **Using DOMPurify (with sanitizer function):**
+   DOMPurify is a library that provides a robust way to sanitize HTML. It's typically used to sanitize HTML to prevent XSS attacks, but you can use it to strip HTML tags as well.
+
+   ```javascript
+   import DOMPurify from 'dompurify';
+
+   function stripHtmlTags(html) {
+     return DOMPurify.sanitize(html, { ALLOWED_TAGS: [] });
+   }
+   ```
+
+4. **Using Cheerio (with jQuery-like syntax):**
+   Cheerio is a jQuery-like library for parsing HTML in Node.js. It allows you to manipulate and traverse the HTML DOM easily. Here, we use it to remove all HTML tags.
+
+   ```javascript
+   const cheerio = require('cheerio');
+
+   function stripHtmlTags(html) {
+     const $ = cheerio.load(html);
+     return $.text();
+   }
+   ```
+
+5. **Using a Server-side library like sanitize-html:**
+   This is an npm library specifically designed for sanitizing HTML. It's more comprehensive than the previous methods and is suitable for server-side usage.
+
+   ```javascript
+   const sanitizeHtml = require('sanitize-html');
+
+   function stripHtmlTags(html) {
+     return sanitizeHtml(html, { allowedTags: [], parser: { decodeEntities: true } });
+   }
+   ```
+
+Here's an example of how you can use each of these functions:
+
+```javascript
+const htmlBody = '<p>This is <strong>bold</strong> text with <em>italic</em> formatting.</p>';
+
+console.log(stripHtmlTags(htmlBody));
+```
+
+These methods offer varying levels of complexity and reliability, so choose the one that best fits your use case and requirements.
