@@ -1,0 +1,49 @@
+import React, { useState } from 'react';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css'; // Import Quill styles
+
+const NewNotesForm = () => {
+  const [comment, setComment] = useState('');
+
+  const handleChange = (value) => {
+    setComment(value);
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    // Process your form submission here or perform any other necessary actions
+    console.log(comment);
+  };
+
+  return (
+    <form id="new-notes-form" className="mt-3" onSubmit={handleSubmit}>
+      <div className="form-group">
+        <h5>{trans('leave_comment')}</h5>
+        <ReactQuill
+          theme="snow"
+          value={comment}
+          onChange={handleChange}
+          placeholder="Notiz hier eingeben..."
+          modules={{
+            toolbar: [
+              [{ 'header': [1, 2, false] }],
+              ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+              [{'list': 'ordered'}, {'list': 'bullet'}, {'indent': '-1'}, {'indent': '+1'}],
+              ['link', 'image'],
+              ['clean']
+            ]
+          }}
+        />
+        <input name="comment" type="hidden" value={comment} />
+      </div>
+      <div className="form-group">
+        <button className="btn btn-primary" id="btn-comment" type="submit">
+          {trans('save-note')}
+          Console.log
+        </button>
+      </div>
+    </form>
+  );
+};
+
+export default NewNotesForm;
