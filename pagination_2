@@ -1,0 +1,227 @@
+<PaginationComponent>
+  <div style={{ width: '100%', height: '100vh', backgroundColor: 'lightgray' }}>
+    {/* Your HTML content here */}
+  </div>
+</PaginationComponent>
+
+import React, { useState, useEffect } from 'react';
+
+const PageSize = { width: 8.5 * 96, height: 11 * 96 }; // 8.5 x 11 inch paper in pixels
+
+const PaginationComponent = ({ children }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const numPagesWidth = Math.ceil(window.innerWidth / PageSize.width);
+      const numPagesHeight = Math.ceil(window.innerHeight / PageSize.height);
+      setTotalPages(numPagesWidth * numPagesHeight);
+    };
+
+    handleResize();
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const goToPage = (pageNumber) => {
+    setCurrentPage(Math.min(Math.max(1, pageNumber), totalPages));
+  };
+
+  const goToPreviousPage = () => {
+    goToPage(currentPage - 1);
+  };
+
+  const goToNextPage = () => {
+    goToPage(currentPage + 1);
+  };
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+        <button onClick={goToPreviousPage} disabled={currentPage === 1}>Previous Page</button>
+        <span>Page {currentPage} of {totalPages}</span>
+        <button onClick={goToNextPage} disabled={currentPage === totalPages}>Next Page</button>
+      </div>
+      <div>
+        {children}
+      </div>
+    </div>
+  );
+};
+
+export default PaginationComponent;
+
+import React, { useState, useEffect } from 'react';
+
+const PageSize = { width: 8.5 * 96, height: 11 * 96 }; // 8.5 x 11 inch paper in pixels
+
+const PaginationComponent = ({ children }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  useEffect(() => {
+    const calculateTotalPages = () => {
+      const numPagesWidth = Math.ceil(window.innerWidth / PageSize.width);
+      const numPagesHeight = Math.ceil(window.innerHeight / PageSize.height);
+      setTotalPages(numPagesWidth * numPagesHeight);
+    };
+
+    calculateTotalPages();
+
+    const handleResize = () => {
+      calculateTotalPages();
+      if (currentPage > totalPages) setCurrentPage(totalPages);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [currentPage, totalPages]);
+
+  const goToPage = (pageNumber) => {
+    setCurrentPage(Math.min(Math.max(1, pageNumber), totalPages));
+  };
+
+  return (
+    <div>
+      {React.Children.map(children, (child, index) => {
+        const pageIndex = Math.floor(index / totalPages) + 1;
+        return pageIndex === currentPage ? child : null;
+      })}
+      <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+        <button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1}>
+          Previous Page
+        </button>
+        <span style={{ margin: '0 1rem' }}>Page {currentPage} of {totalPages}</span>
+        <button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages}>
+          Next Page
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default PaginationComponent;
+
+import React, { useState, useEffect } from 'react';
+
+const PageSize = { width: 8.5 * 96, height: 11 * 96 }; // 8.5 x 11 inch paper in pixels
+
+const PaginationComponent = ({ children }) => {
+  const [totalPages, setTotalPages] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const calculateTotalPages = () => {
+      const numPagesWidth = Math.ceil(window.innerWidth / PageSize.width);
+      const numPagesHeight = Math.ceil(window.innerHeight / PageSize.height);
+      setTotalPages(numPagesWidth * numPagesHeight);
+    };
+
+    calculateTotalPages();
+
+    const handleResize = () => {
+      calculateTotalPages();
+      if (currentPage > totalPages) setCurrentPage(totalPages);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [currentPage, totalPages]);
+
+  const handlePageChange = (event) => {
+    setCurrentPage(parseInt(event.target.value));
+  };
+
+  const renderPageOptions = () => {
+    const options = [];
+    for (let i = 1; i <= totalPages; i++) {
+      options.push(<option key={i} value={i}>{i}</option>);
+    }
+    return options;
+  };
+
+  return (
+    <div style={{ textAlign: 'center' }}>
+      <div style={{ marginBottom: '1rem' }}>
+        <label htmlFor="page-select">Go to Page:</label>
+        <select id="page-select" value={currentPage} onChange={handlePageChange}>
+          {renderPageOptions()}
+        </select>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        {React.Children.map(children, (child, index) => {
+          const pageIndex = Math.floor(index / totalPages) + 1;
+          return pageIndex === currentPage ? child : null;
+        })}
+      </div>
+      <p>Page {currentPage} of {totalPages}</p>
+    </div>
+  );
+};
+
+export default PaginationComponent;
+
+import React, { useState, useEffect } from 'react';
+
+const PageSize = { width: 8.5 * 96, height: 11 * 96 }; // 8.5 x 11 inch paper in pixels
+
+const PaginationComponent = ({ children }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pages, setPages] = useState([]);
+
+  useEffect(() => {
+    const calculatePages = () => {
+      const numPagesWidth = Math.ceil(window.innerWidth / PageSize.width);
+      const numPagesHeight = Math.ceil(window.innerHeight / PageSize.height);
+      const totalPages = numPagesWidth * numPagesHeight;
+      const pagesArray = [];
+
+      for (let i = 0; i < totalPages; i++) {
+        pagesArray.push(
+          <div key={i} style={{ width: `${PageSize.width}px`, height: `${PageSize.height}px`, border: '1px solid black', margin: '10px auto' }}>
+            {children.slice(i * totalPages, (i + 1) * totalPages)}
+          </div>
+        );
+      }
+
+      setPages(pagesArray);
+    };
+
+    calculatePages();
+
+    const handleResize = () => {
+      calculatePages();
+      if (currentPage > pages.length) setCurrentPage(pages.length);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [currentPage, pages.length, children]);
+
+  const goToPage = (pageNumber) => {
+    setCurrentPage(Math.min(Math.max(1, pageNumber), pages.length));
+  };
+
+  return (
+    <div>
+      {pages.map((page, index) => (
+        <div key={index} style={{ display: index + 1 === currentPage ? 'block' : 'none' }}>
+          {page}
+        </div>
+      ))}
+      <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+        <button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1}>
+          Previous Page
+        </button>
+        <span style={{ margin: '0 1rem' }}>Page {currentPage} of {pages.length}</span>
+        <button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === pages.length}>
+          Next Page
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default PaginationComponent;
