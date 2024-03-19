@@ -1,0 +1,396 @@
+import React, { useContext, useState, useEffect } from "react";
+import { AppContext } from "../context/AppContext";
+import { Paper, Grid } from "@mui/material";
+
+const PAGE_HEIGHT = 10; // Height of content area in inches, excluding padding
+
+const PdfViewer = () => {
+  const { pdfContent } = useContext(AppContext);
+  const [pages, setPages] = useState([]);
+  const [currentPage, setCurrentPage] = useState(0);
+
+  useEffect(() => {
+    // Calculate maximum content height for a single page
+    const maxContentHeight = PAGE_HEIGHT - 2; // Subtract padding
+    // Construct pages manually
+    const contentPages = [];
+
+    // Page 1: Manually construct content
+    let currentPageContent = [];
+    for (let i = 0; i < 5 && i < pdfContent.length; i++) {
+      const { part1, part2 } = pdfContent[i];
+      const uniqueId = `paragraph-${i}`;
+      const paragraphElement = (
+        <div id={uniqueId} key={uniqueId}>
+          <span>{part1} {part2}</span>
+        </div>
+      );
+      currentPageContent.push(paragraphElement);
+    }
+    contentPages.push(currentPageContent);
+
+    // Page 2: Add a picture of an actor
+    const actorPicture = (
+      <div key="actor-picture">
+        <img src="actor.jpg" alt="Actor" style={{ width: "100%" }} />
+      </div>
+    );
+    contentPages.push([actorPicture]);
+
+    // Remaining pages: Pagination starts from page 3
+    let currentPageIndex = 5; // Start from index 5 if there are more paragraphs
+    while (currentPageIndex < pdfContent.length) {
+      currentPageContent = [];
+      let totalHeight = 0;
+      for (
+        let i = currentPageIndex;
+        i < pdfContent.length && totalHeight < maxContentHeight;
+        i++
+      ) {
+        const { part1, part2 } = pdfContent[i];
+        const uniqueId = `paragraph-${i}`;
+        const paragraphElement = (
+          <div id={uniqueId} key={uniqueId}>
+            <span>{part1} {part2}</span>
+          </div>
+        );
+
+        // Render the paragraph off-screen to get its dimensions
+        document.body.appendChild(paragraphElement);
+        const element = document.getElementById(uniqueId);
+        const rect = element.getBoundingClientRect();
+        document.body.removeChild(paragraphElement);
+
+        // Calculate the height of the paragraph
+        const paragraphHeight = rect.height;
+
+        // Check if adding this paragraph exceeds the max content height
+        if (totalHeight + paragraphHeight <= maxContentHeight) {
+          // Add the paragraph to the current page
+          currentPageContent.push(paragraphElement);
+          totalHeight += paragraphHeight;
+        } else {
+          // Break if adding the paragraph exceeds the max height
+          break;
+        }
+      }
+      // Push the current page content
+      contentPages.push(currentPageContent);
+      currentPageIndex += currentPageContent.length;
+    }
+
+    setPages(contentPages);
+    setCurrentPage(0);
+  }, [pdfContent]);
+
+  const handleNextPage = () => {
+    if (currentPage < pages.length - 1) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 0) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  return (
+    <div>
+      <h2>All PDF Content</h2>
+      <div style={{}}>
+        <Grid container spacing={2}>
+          <Grid item xs={6}>
+            <Paper
+              elevation={2}
+              style={{
+                width: "100%",
+                height: "100%",
+                width: "8.5in",
+                height: "11in",
+                margin: "auto",
+              }}
+            >
+              <div style={{ padding: "1in" }}>
+                {pages[currentPage]}
+              </div>
+            </Paper>
+            <div>
+              <button onClick={handlePrevPage}>Previous Page</button>
+              <button onClick={handleNextPage}>Next Page</button>
+            </div>
+          </Grid>
+        </Grid>
+      </div>
+    </div>
+  );
+};
+
+export default PdfViewer;
+
+
+
+========
+
+import React, { useContext, useState, useEffect } from "react";
+import { AppContext } from "../context/AppContext";
+import { Paper, Grid } from "@mui/material";
+
+const PAGE_HEIGHT = 10; // Height of content area in inches, excluding padding
+
+const PdfViewer = () => {
+  const { pdfContent } = useContext(AppContext);
+  const [pages, setPages] = useState([]);
+  const [currentPage, setCurrentPage] = useState(0);
+
+  useEffect(() => {
+    // Calculate maximum content height for a single page
+    const maxContentHeight = PAGE_HEIGHT - 2; // Subtract padding
+    // Construct pages manually
+    const contentPages = [];
+
+    // Page 1: Manually construct content
+    let currentPageContent = [];
+    for (let i = 0; i < 5 && i < pdfContent.length; i++) {
+      const { part1, part2 } = pdfContent[i];
+      const uniqueId = `paragraph-${i}`;
+      const paragraphElement = (
+        <div id={uniqueId} key={uniqueId}>
+          <span>{part1} {part2}</span>
+        </div>
+      );
+      currentPageContent.push(paragraphElement);
+    }
+    contentPages.push(currentPageContent);
+
+    // Page 2: Add a picture of an actor
+    const actorPicture = (
+      <div key="actor-picture">
+        <img src="actor.jpg" alt="Actor" style={{ width: "100%" }} />
+      </div>
+    );
+    contentPages.push([actorPicture]);
+
+    // Page 3 and beyond: Paginate the remaining content
+    let remainingContent = pdfContent.slice(5); // Exclude the first 5 paragraphs
+    while (remainingContent.length > 0) {
+      currentPageContent = [];
+      let totalHeight = 0;
+      let i = 0;
+      while (i < remainingContent.length && totalHeight < maxContentHeight) {
+        const { part1, part2 } = remainingContent[i];
+        const uniqueId = `paragraph-${i}`;
+        const paragraphElement = (
+          <div id={uniqueId} key={uniqueId}>
+            <span>{part1} {part2}</span>
+          </div>
+        );
+
+        // Render the paragraph off-screen to get its dimensions
+        document.body.appendChild(paragraphElement);
+        const element = document.getElementById(uniqueId);
+        const rect = element.getBoundingClientRect();
+        document.body.removeChild(paragraphElement);
+
+        // Calculate the height of the paragraph
+        const paragraphHeight = rect.height;
+
+        // Check if adding this paragraph exceeds the max content height
+        if (totalHeight + paragraphHeight <= maxContentHeight) {
+          // Add the paragraph to the current page
+          currentPageContent.push(paragraphElement);
+          totalHeight += paragraphHeight;
+        } else {
+          // Break if adding the paragraph exceeds the max height
+          break;
+        }
+        i++;
+      }
+      // Push the current page content
+      contentPages.push(currentPageContent);
+      // Move to the next set of paragraphs
+      remainingContent = remainingContent.slice(i);
+    }
+
+    setPages(contentPages);
+    setCurrentPage(0);
+  }, [pdfContent]);
+
+  const handleNextPage = () => {
+    if (currentPage < pages.length - 1) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 0) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  return (
+    <div>
+      <h2>All PDF Content</h2>
+      <div style={{}}>
+        <Grid container spacing={2}>
+          <Grid item xs={6}>
+            <Paper
+              elevation={2}
+              style={{
+                width: "100%",
+                height: "100%",
+                width: "8.5in",
+                height: "11in",
+                margin: "auto",
+              }}
+            >
+              <div style={{ padding: "1in" }}>
+                {pages[currentPage]}
+              </div>
+            </Paper>
+            <div>
+              <button onClick={handlePrevPage}>Previous Page</button>
+              <button onClick={handleNextPage}>Next Page</button>
+            </div>
+          </Grid>
+        </Grid>
+      </div>
+    </div>
+  );
+};
+
+export default PdfViewer;
+
+
+==============
+
+import React, { useContext, useState, useEffect } from "react";
+import { AppContext } from "../context/AppContext";
+import { Paper, Grid } from "@mui/material";
+
+const PAGE_HEIGHT = 10; // Height of content area in inches, excluding padding
+
+const PdfViewer = () => {
+  const { pdfContent } = useContext(AppContext);
+  const [pages, setPages] = useState([]);
+  const [currentPage, setCurrentPage] = useState(0);
+
+  useEffect(() => {
+    // Calculate maximum content height for a single page
+    const maxContentHeight = PAGE_HEIGHT - 2; // Subtract padding
+    // Construct pages manually
+    const contentPages = [];
+
+    // Page 1: Manually construct content
+    let currentPageContent = [];
+    for (let i = 0; i < 5 && i < pdfContent.length; i++) {
+      const { part1, part2 } = pdfContent[i];
+      const uniqueId = `paragraph-${i}`;
+      const paragraphElement = (
+        <div id={uniqueId} key={uniqueId}>
+          <span>{part1} {part2}</span>
+        </div>
+      );
+      currentPageContent.push(paragraphElement);
+    }
+    contentPages.push(currentPageContent);
+
+    // Page 2: Add a picture of an actor
+    const actorPicture = (
+      <div key="actor-picture">
+        <img src="actor.jpg" alt="Actor" style={{ width: "100%" }} />
+      </div>
+    );
+    contentPages.push([actorPicture]);
+
+    // Page 3 and beyond: Paginate the remaining content
+    let remainingContent = pdfContent.slice(5); // Exclude the first 5 paragraphs
+    let currentPageIndex = 2; // Start from page 3
+    while (remainingContent.length > 0) {
+      currentPageContent = [];
+      let totalHeight = 0;
+      let i = 0;
+      while (i < remainingContent.length && totalHeight < maxContentHeight) {
+        const { part1, part2 } = remainingContent[i];
+        const uniqueId = `paragraph-${currentPageIndex}-${i}`;
+        const paragraphElement = (
+          <div id={uniqueId} key={uniqueId}>
+            <span>{part1} {part2}</span>
+          </div>
+        );
+
+        // Render the paragraph off-screen to get its dimensions
+        document.body.appendChild(paragraphElement);
+        const element = document.getElementById(uniqueId);
+        const rect = element.getBoundingClientRect();
+        document.body.removeChild(paragraphElement);
+
+        // Calculate the height of the paragraph
+        const paragraphHeight = rect.height;
+
+        // Check if adding this paragraph exceeds the max content height
+        if (totalHeight + paragraphHeight <= maxContentHeight) {
+          // Add the paragraph to the current page
+          currentPageContent.push(paragraphElement);
+          totalHeight += paragraphHeight;
+        } else {
+          // Break if adding the paragraph exceeds the max height
+          break;
+        }
+        i++;
+      }
+      // Push the current page content
+      contentPages.push(currentPageContent);
+      // Move to the next set of paragraphs
+      remainingContent = remainingContent.slice(i);
+      currentPageIndex++;
+    }
+
+    setPages(contentPages);
+    setCurrentPage(0);
+  }, [pdfContent]);
+
+  const handleNextPage = () => {
+    if (currentPage < pages.length - 1) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 0) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  return (
+    <div>
+      <h2>All PDF Content</h2>
+      <div style={{}}>
+        <Grid container spacing={2}>
+          <Grid item xs={6}>
+            <Paper
+              elevation={2}
+              style={{
+                width: "100%",
+                height: "100%",
+                width: "8.5in",
+                height: "11in",
+                margin: "auto",
+              }}
+            >
+              <div style={{ padding: "1in" }}>
+                {pages[currentPage]}
+              </div>
+            </Paper>
+            <div>
+              <button onClick={handlePrevPage}>Previous Page</button>
+              <button onClick={handleNextPage}>Next Page</button>
+            </div>
+          </Grid>
+        </Grid>
+      </div>
+    </div>
+  );
+};
+
+export default PdfViewer;
