@@ -1,0 +1,135 @@
+import React, { useContext, useState, useEffect, useRef } from "react";
+import ReactHtmlParser from "react-html-parser";
+import { Paper, Grid, Button } from "@mui/material";
+import { AppContext } from "../context/AppContext";
+
+const PAGE_WIDTH = 8.5; // Width of the page in inches
+const PAGE_HEIGHT = 11; // Height of the page in inches
+const MARGIN = 1; // Margin size in inches
+
+const PdfViewer = () => {
+  const { pdfContent } = useContext(AppContext);
+  const [pages, setPages] = useState([]);
+  const [currentPage, setCurrentPage] = useState(0);
+  const paperRef = useRef(null); // Reference to the Paper component
+
+  useEffect(() => {
+    // Calculate maximum content height for a single page
+    const maxContentHeight = PAGE_HEIGHT - 2 * MARGIN; // Subtract margins
+    const maxContentWidth = PAGE_WIDTH - 2 * MARGIN; // Subtract margins
+    const contentPages = [];
+    let currentPageContent = "";
+    let totalHeight = 0;
+    let totalWidth = 0;
+
+    const paragraphs = Object.values(pdfContent); // Convert pdfContent object to an array of paragraphs
+
+    paragraphs.forEach((paragraph, index) => {
+      const paragraphId = `paragraph_${index}`;
+      const paragraphHtml = `<div id="${paragraphId}">${paragraph.immutable}<br>${paragraph.mutable}<br></div>`;
+
+      // Append paragraph HTML to the current page content
+      currentPageContent += paragraphHtml;
+
+      // Check the height of the paragraph
+      const paragraphElement = document.getElementById(paragraphId);
+      const rect = paragraphElement.getBoundingClientRect();
+      const paragraphHeight = rect.height / 96; // Convert pixel height to inches assuming 96 pixels per inch
+
+      // Check if adding this paragraph exceeds the max content height
+      if (totalHeight + paragraphHeight > maxContentHeight) {
+        // If the current page is full, push it to the content pages
+        contentPages.push(currentPageContent);
+        // Start a new page with the current paragraph
+        currentPageContent = paragraphHtml;
+        totalHeight = paragraphHeight;
+      } else {
+        // Increment the total height
+        totalHeight += paragraphHeight;
+      }
+
+      // Check if the current page is full based on width
+      totalWidth = Math.max(totalWidth, rect.width / 96); // Convert pixel width to inches
+      if (totalWidth >= maxContentWidth) {
+        contentPages.push(currentPageContent);
+        currentPageContent = "";
+        totalHeight = 0;
+        totalWidth = 0;
+      }
+    });
+
+    // Push the remaining content onto the last page
+    if (currentPageContent !== "") {
+      contentPages.push(currentPageContent);
+    }
+    setPages(contentPages);
+    setCurrentPage(0);
+  }, [pdfContent]);
+
+  const handleNextPage = () => {
+    if (currentPage < pages.length - 1) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 0) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  // Function to calculate the position of the edit button based on the Paper width
+  const calculateButtonPosition = () => {
+    if (paperRef.current) {
+      const paperWidth = paperRef.current.offsetWidth;
+      return paperWidth + 50; // Add 50px to the right of the Paper
+    }
+    return "auto"; // If Paper width is not yet available, position it automatically
+  };
+
+  return (
+    <div>
+      <h2>All PDF Content</h2>
+      <div style={{ position: "relative" }}>
+        <Grid container spacing={2}>
+          <Grid item xs={6}>
+            <Paper
+              elevation={2}
+              style={{
+                width: "100%",
+                height: "100%",
+                width: "8.5in",
+                height: "11in",
+                margin: "auto",
+              }}
+              ref={paperRef}
+            >
+              <div style={{ padding: `${MARGIN}in` }}>
+                {ReactHtmlParser(pages[currentPage])}
+              </div>
+            </Paper>
+            <div>
+              <button onClick={handlePrevPage}>Previous Page</button>
+              <button onClick={handleNextPage}>Next Page</button>
+            </div>
+          </Grid>
+        </Grid>
+        {/* Edit button positioned relative to the Paper */}
+        <Button
+          variant="contained"
+          color="primary"
+          style={{
+            position: "absolute",
+            top: "0",
+            left: calculateButtonPosition(),
+            marginTop: `${MARGIN / 2}in`, // Align with the top of the Paper
+          }}
+        >
+          Edit
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export default PdfViewer;
