@@ -1,0 +1,543 @@
+import React from "react";
+import "./App.css";
+import Notification from "./Notification";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/ReactToastify.min.css";
+
+function App() {
+  const paragraph1 = "I was sent to earth to protect my cousin.";
+  const paragraph2 = "I was sent to moon in order to protect you.";
+
+  return (
+    <>
+      <Notification paragraph1={paragraph1} paragraph2={paragraph2} />
+      <ToastContainer position="bottom-right" newestOnTop />
+    </>
+  );
+}
+
+export default App;
+import React, { useState, useEffect } from "react";
+import {
+  Alert,
+  Badge,
+  Box,
+  IconButton,
+  Popper,
+  Fade,
+  Button,
+  Typography,
+  FormGroup,
+  FormControlLabel,
+  Switch,
+  Stack,
+  Divider, // Added Divider component
+} from "@mui/material";
+import MailIcon from "@mui/icons-material/Mail";
+import MarkChatReadIcon from "@mui/icons-material/MarkChatRead";
+import CheckIcon from "@mui/icons-material/Check";
+
+import { useNotificationCenter } from "react-toastify/addons/use-notification-center";
+import { toast } from "react-toastify";
+
+const types = ["success", "info", "warning", "error"];
+
+const Notification = ({ paragraph1, paragraph2 }) => {
+  const { notifications, clear, markAllAsRead, markAsRead, unreadCount } =
+    useNotificationCenter();
+  const [showUnreadOnly, setShowUnreadOnly] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  useEffect(() => {
+    // Compare paragraphs when component mounts
+    compareParagraphs();
+  }, [paragraph1, paragraph2]);
+
+  const compareParagraphs = () => {
+    const sentences1 = paragraph1.match(/[^.!?]+[.!?]+/g);
+    const sentences2 = paragraph2.match(/[^.!?]+[.!?]+/g);
+    const diff = [];
+
+    // Compare sentences and highlight differences
+    sentences1.forEach((sentence, index) => {
+      if (sentences2[index] && sentence !== sentences2[index]) {
+        const diffSentence = {
+          paragraph1: sentence,
+          paragraph2: sentences2[index],
+        };
+        diff.push(diffSentence);
+      }
+    });
+
+    // Notify user about differences
+    if (diff.length > 0) {
+      diff.forEach((diffSentence) => {
+        toast(`${diffSentence.paragraph1} | ${diffSentence.paragraph2}`, {
+          type: "warning",
+        });
+      });
+    }
+  };
+
+  const addNotification = () => {
+    // use a random type of notification
+    toast("Lorem ipsum dolor sit amet, consectetur adipiscing elit", {
+      type: types[Math.floor(Math.random() * types.length)],
+    });
+  };
+
+  const toggleNotificationCenter = (event) => {
+    setAnchorEl(event.currentTarget);
+    setIsOpen(!isOpen);
+  };
+
+  const toggleFilter = () => {
+    setShowUnreadOnly(!showUnreadOnly);
+  };
+
+  return (
+    <Box sx={{ margin: "8px" }}>
+      <IconButton size="large" onClick={toggleNotificationCenter}>
+        <Badge badgeContent={unreadCount} color="primary">
+          <MailIcon color="action" />
+        </Badge>
+      </IconButton>
+      <button onClick={addNotification}>Add notification</button>
+
+      <Popper open={isOpen} anchorEl={anchorEl} transition>
+        {({ TransitionProps }) => (
+          <Fade {...TransitionProps} timeout={350}>
+            <Box>
+              <Box
+                sx={{
+                  background: "#666",
+                  padding: "8px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Typography variant="h5" color="#fff">
+                  Notification center
+                </Typography>
+                <FormGroup sx={{ color: "#fff" }}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        color="secondary"
+                        onChange={toggleFilter}
+                        checked={showUnreadOnly}
+                      />
+                    }
+                    label="Show unread only"
+                  />
+                </FormGroup>
+              </Box>
+              <Stack
+                sx={{
+                  height: "400px",
+                  width: "min(60ch, 100ch)",
+                  padding: "12px",
+                  background: "#f1f1f1",
+                  borderRadius: "8px",
+                  overflowY: "auto",
+                }}
+                spacing={2}
+              >
+                {(!notifications.length ||
+                  (unreadCount === 0 && showUnreadOnly)) && (
+                  <h4>
+                    Your queue is empty! you are all set{" "}
+                    <span role="img" aria-label="dunno what to put">
+                      🎉
+                    </span>
+                  </h4>
+                )}
+                {(showUnreadOnly
+                  ? notifications.filter((v) => !v.read)
+                  : notifications
+                ).map((notification, index) => (
+                  <Alert
+                    key={notification.id}
+                    severity={notification.type || "info"}
+                    action={
+                      notification.read ? (
+                        <CheckIcon />
+                      ) : (
+                        <IconButton
+                          color="primary"
+                          aria-label="upload picture"
+                          component="span"
+                          onClick={() => markAsRead(notification.id)}
+                        >
+                          <MarkChatReadIcon />
+                        </IconButton>
+                      )
+                    }
+                  >
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <Typography variant="body1">
+                        {console.log(notification)}
+                        {notification.paragraph1 && (
+                          <span>
+                            {notification.paragraph1
+                              .split(" ")
+                              .map((word, i) => {
+                                return (
+                                  <span
+                                    key={i}
+                                    style={{
+                                      color:
+                                        notification.highlightedWords1 &&
+                                        notification.highlightedWords1.includes(
+                                          word
+                                        )
+                                          ? "red"
+                                          : "inherit",
+                                    }}
+                                  >
+                                    {word}{" "}
+                                  </span>
+                                );
+                              })}
+                          </span>
+                        )}
+                      </Typography>
+                      <Divider orientation="vertical" flexItem />
+                      <Typography variant="body1">
+                        {notification.paragraph2 && (
+                          <span>
+                            {notification.paragraph2
+                              .split(" ")
+                              .map((word, i) => {
+                                return (
+                                  <span
+                                    key={i}
+                                    style={{
+                                      color:
+                                        notification.highlightedWords2 &&
+                                        notification.highlightedWords2.includes(
+                                          word
+                                        )
+                                          ? "red"
+                                          : "inherit",
+                                    }}
+                                  >
+                                    {word}{" "}
+                                  </span>
+                                );
+                              })}
+                          </span>
+                        )}
+                      </Typography>
+                    </Stack>
+                  </Alert>
+                ))}
+              </Stack>
+              <Box
+                sx={{
+                  background: "#666",
+                  padding: "8px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Button variant="contained" onClick={clear}>
+                  Clear All
+                </Button>
+
+                <Button variant="contained" onClick={markAllAsRead}>
+                  Mark all as read
+                </Button>
+              </Box>
+            </Box>
+          </Fade>
+        )}
+      </Popper>
+    </Box>
+  );
+};
+
+export default Notification;
+
+
+import React from "react";
+
+const SentenceComparator = ({ paragraph1, paragraph2 }) => {
+  const compareSentences = (sentence1, sentence2) => {
+    const words1 = sentence1.toLowerCase().match(/\w+/g) || [];
+    const words2 = sentence2.toLowerCase().match(/\w+/g) || [];
+    const differences1 = words2.filter(word => !words1.includes(word));
+    const differences2 = words1.filter(word => !words2.includes(word));
+
+    return {
+      sentence1: sentence1.split(" ").map(word => (
+        differences1.includes(word) ? <span className="imp">{word} </span> : word + " "
+      )),
+      sentence2: sentence2.split(" ").map(word => (
+        differences2.includes(word) ? <span className="imp">{word} </span> : word + " "
+      ))
+    };
+  };
+
+  const sentences1 = paragraph1.match(/[^.!?]+[.!?]+/g) || [];
+  const sentences2 = paragraph2.match(/[^.!?]+[.!?]+/g) || [];
+
+  const differences = sentences1.map((sentence1, index) => {
+    const sentence2 = sentences2[index] || ""; // In case paragraph2 has fewer sentences
+    return compareSentences(sentence1, sentence2);
+  });
+
+  return (
+    <div>
+      {differences.map((diff, index) => (
+        <div key={index}>
+          <span>
+            {diff.sentence1}
+          </span>
+          <span>|</span>
+          <span>
+            {diff.sentence2}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default SentenceComparator;
+
+
+import React from "react";
+
+const SentenceComparatorArray = ({ paragraph1, paragraph2 }) => {
+  const compareSentences = (sentence1, sentence2) => {
+    const words1 = sentence1.toLowerCase().match(/\w+/g) || [];
+    const words2 = sentence2.toLowerCase().match(/\w+/g) || [];
+    const differences1 = words2.filter(word => !words1.includes(word));
+    const differences2 = words1.filter(word => !words2.includes(word));
+
+    return {
+      sentence1: sentence1.split(" ").map(word => (
+        differences1.includes(word) ? <span className="imp">{word} </span> : word + " "
+      )),
+      sentence2: sentence2.split(" ").map(word => (
+        differences2.includes(word) ? <span className="imp">{word} </span> : word + " "
+      ))
+    };
+  };
+
+  const sentences1 = paragraph1.match(/[^.!?]+[.!?]+/g) || [];
+  const sentences2 = paragraph2.match(/[^.!?]+[.!?]+/g) || [];
+
+  const differences = sentences1.map((sentence1, index) => {
+    const sentence2 = sentences2[index] || ""; // In case paragraph2 has fewer sentences
+    return compareSentences(sentence1, sentence2);
+  });
+
+  return (
+    <div>
+      {differences.map((diff, index) => (
+        <div key={index}>
+          <span>
+            {diff.sentence1}
+          </span>
+          <span>|</span>
+          <span>
+            {diff.sentence2}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default SentenceComparatorArray;
+
+import React from "react";
+
+const SentenceComparatorRegex = ({ paragraph1, paragraph2 }) => {
+  const compareSentences = (sentence1, sentence2) => {
+    const words1 = sentence1.toLowerCase().match(/\w+/g) || [];
+    const words2 = sentence2.toLowerCase().match(/\w+/g) || [];
+    const differences1 = words2.filter(word => !words1.includes(word));
+    const differences2 = words1.filter(word => !words2.includes(word));
+
+    return {
+      sentence1: sentence1.split(" ").map(word => (
+        differences1.includes(word) ? <span className="imp">{word} </span> : word + " "
+      )),
+      sentence2: sentence2.split(" ").map(word => (
+        differences2.includes(word) ? <span className="imp">{word} </span> : word + " "
+      ))
+    };
+  };
+
+  const sentences1 = paragraph1.match(/[^.!?]+[.!?]+/g) || [];
+  const sentences2 = paragraph2.match(/[^.!?]+[.!?]+/g) || [];
+
+  const differences = sentences1.map((sentence1, index) => {
+    const sentence2 = sentences2[index] || ""; // In case paragraph2 has fewer sentences
+    return compareSentences(sentence1, sentence2);
+  });
+
+  return (
+    <div>
+      {differences.map((diff, index) => (
+        <div key={index}>
+          <span>
+            {diff.sentence1}
+          </span>
+          <span>|</span>
+          <span>
+            {diff.sentence2}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default SentenceComparatorRegex;
+
+import React from "react";
+
+const SentenceComparatorLoops = ({ paragraph1, paragraph2 }) => {
+  const compareSentences = (sentence1, sentence2) => {
+    const words1 = sentence1.toLowerCase().match(/\w+/g) || [];
+    const words2 = sentence2.toLowerCase().match(/\w+/g) || [];
+    const differences1 = words2.filter(word => !words1.includes(word));
+    const differences2 = words1.filter(word => !words2.includes(word));
+
+    return {
+      sentence1: sentence1.split(" ").map(word => (
+        differences1.includes(word) ? <span className="imp">{word} </span> : word + " "
+      )),
+      sentence2: sentence2.split(" ").map(word => (
+        differences2.includes(word) ? <span className="imp">{word} </span> : word + " "
+      ))
+    };
+  };
+
+  const sentences1 = paragraph1.match(/[^.!?]+[.!?]+/g) || [];
+  const sentences2 = paragraph2.match(/[^.!?]+[.!?]+/g) || [];
+
+  const differences = [];
+
+  for (let i = 0; i < Math.max(sentences1.length, sentences2.length); i++) {
+    const sentence1 = sentences1[i] || "";
+    const sentence2 = sentences2[i] || "";
+    differences.push(compareSentences(sentence1, sentence2));
+  }
+
+  return (
+    <div>
+      {differences.map((diff, index) => (
+        <div key={index}>
+          <span>
+            {diff.sentence1}
+          </span>
+          <span>|</span>
+          <span>
+            {diff.sentence2}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default SentenceComparatorLoops;
+import React from "react";
+import diff from "diff";
+
+const SentenceComparatorExternal = ({ paragraph1, paragraph2 }) => {
+  const sentences1 = paragraph1.match(/[^.!?]+[.!?]+/g) || [];
+  const sentences2 = paragraph2.match(/[^.!?]+[.!?]+/g) || [];
+
+  const differences = [];
+
+  for (let i = 0; i < Math.max(sentences1.length, sentences2.length); i++) {
+    const sentence1 = sentences1[i] || "";
+    const sentence2 = sentences2[i] || "";
+    const diffResult = diff.diffWords(sentence1, sentence2);
+
+    const diffComponents = diffResult.map((part, index) => (
+      part.added ? <span className="imp" key={index}>{part.value} </span> : part.removed ? <span className="imp" key={index}>{part.value} </span> : part.value + " "
+    ));
+
+    differences.push({ sentence1: diffComponents, sentence2: diffComponents });
+  }
+
+  return (
+    <div>
+      {differences.map((diff, index) => (
+        <div key={index}>
+          <span>
+            {diff.sentence1}
+          </span>
+          <span>|</span>
+          <span>
+            {diff.sentence2}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default SentenceComparatorExternal;
+import React, { createContext, useContext, useState } from "react";
+
+const SentenceContext = createContext();
+
+const SentenceProvider = ({ children }) => {
+  const [differences, setDifferences] = useState([]);
+
+  return (
+    <SentenceContext.Provider value={{ differences, setDifferences }}>
+      {children}
+    </SentenceContext.Provider>
+  );
+};
+
+const useSentence = () => useContext(SentenceContext);
+
+const SentenceComparatorContext = ({ paragraph1, paragraph2 }) => {
+  const { setDifferences } = useSentence();
+
+  const compareSentences = (sentence1, sentence2) => {
+    const words1 = sentence1.toLowerCase().match(/\w+/g) || [];
+    const words2 = sentence2.toLowerCase().match(/\w+/g) || [];
+    const differences1 = words2.filter(word => !words1.includes(word));
+    const differences2 = words1.filter(word => !words2.includes(word));
+
+    return {
+      sentence1: sentence1.split(" ").map(word => (
+        differences1.includes(word) ? <span className="imp">{word} </span> : word + " "
+      )),
+      sentence2: sentence2.split(" ").map(word => (
+        differences2.includes(word) ? <span className="imp">{word} </span> : word + " "
+      ))
+    };
+  };
+
+  const sentences1 = paragraph1.match(/[^.!?]+[.!?]+/g) || [];
+  const sentences2 = paragraph2.match(/[^.!?]+[.!?]+/g) || [];
+
+  const diffs = [];
+
+  for (let i = 0; i < Math.max(sentences1.length, sentences2.length); i++) {
+    const sentence1 = sentences1[i] || "";
+    const sentence2 = sentences2[i] || "";
+    diffs.push(compareSentences(sentence1, sentence2));
+  }
+
+  setDifferences(diffs);
+
+  return null;
+};
+
+export { SentenceProvider,
